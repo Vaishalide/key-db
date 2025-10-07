@@ -80,7 +80,7 @@ def shorten_url(long_url):
     try:
         # Generate random alias
         random_suffix = secrets.token_hex(3)[:6]
-        alias = f"SDVBOTX{random_suffix}"
+        alias = f"PWTHORX{random_suffix}"
 
         # Build URL with all parameters
         shortener_url = (
@@ -125,7 +125,7 @@ def login():
     response_data = {
         "status": "success",
         "shortenedUrl": short_url_data.get("shortenedUrl"),
-        "video_url": "https://youtube.com/shorts/a9jf4pOVTXw?si=5Pq1G20M_iAv0Rnc"
+        "video_url": "https://youtube.com/"
     }
 
     return jsonify(response_data)
@@ -369,7 +369,7 @@ def verify():
                     </button>
                     
                     <div class="key-meta">
-                        <span><i class="far fa-clock"></i> Valid for 3 days</span>
+                        <span><i class="far fa-clock"></i> Valid for 1 days</span>
                         <span><i class="fas fa-shield-alt"></i> Secure connection</span>
                     </div>
                 </div>
@@ -610,7 +610,7 @@ def verify():
                 </button>
                 
                 <div class="key-meta">
-                    <span><i class="far fa-clock"></i> Valid for 3 days</span>
+                    <span><i class="far fa-clock"></i> Valid for 1 days</span>
                     <span><i class="fas fa-shield-alt"></i> Secure connection</span>
                 </div>
             </div>
