@@ -15,7 +15,7 @@ app = Flask(__name__)
 GITHUB_REPO_OWNER = "Vaishalide"
 GITHUB_REPO_NAME = "Key-DB"
 GITHUB_ACCESS_TOKEN = "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"
-TOKEN_EXPIRY_MINUTES = 20  # Token valid for 10 minutes
+TOKEN_EXPIRY_MINUTES = 10  # Token valid for 10 minutes
 KEY_EXPIRY_DAYS = 1  # Key valid for 3 days
 SHORTENER_API_KEY = "be1be8f8f3c02db2e943cc7199c5641971d86283"
 
@@ -80,7 +80,7 @@ def shorten_url(long_url):
     try:
         # Generate random alias
         random_suffix = secrets.token_hex(3)[:6]
-        alias = f"PWTHORX{random_suffix}"
+        alias = f"SDVBOTX{random_suffix}"
 
         # Build URL with all parameters
         shortener_url = (
@@ -125,7 +125,7 @@ def login():
     response_data = {
         "status": "success",
         "shortenedUrl": short_url_data.get("shortenedUrl"),
-        "video_url": "https://youtube.com/"
+        "video_url": "https://youtube.com/shorts/a9jf4pOVTXw?si=5Pq1G20M_iAv0Rnc"
     }
 
     return jsonify(response_data)
@@ -369,7 +369,7 @@ def verify():
                     </button>
                     
                     <div class="key-meta">
-                        <span><i class="far fa-clock"></i> Valid for 1 days</span>
+                        <span><i class="far fa-clock"></i> Valid for 3 days</span>
                         <span><i class="fas fa-shield-alt"></i> Secure connection</span>
                     </div>
                 </div>
@@ -610,7 +610,7 @@ def verify():
                 </button>
                 
                 <div class="key-meta">
-                    <span><i class="far fa-clock"></i> Valid for 1 days</span>
+                    <span><i class="far fa-clock"></i> Valid for 3 days</span>
                     <span><i class="fas fa-shield-alt"></i> Secure connection</span>
                 </div>
             </div>
