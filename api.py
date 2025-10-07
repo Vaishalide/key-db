@@ -11,11 +11,15 @@ import redis  # <-- IMPORT REDIS
 
 app = Flask(__name__)
 
-# --- NEW: CONNECT TO REDIS ---
-# This uses the REDIS_URL from your server's environment variables (like on Heroku),
-# or connects to a local Redis server by default.
-redis_url = os.environ.get('REDIS_URL', 'redis://localhost:6379')
-redis_client = redis.from_url(redis_url)
+# --- MODIFIED: CONNECT TO REDIS & HANDLE HEROKU SSL ---
+redis_url = os.environ.get('REDIS_URL')
+
+if redis_url:
+    # On Heroku, REDIS_URL is present. Connect with SSL verification disabled.
+    redis_client = redis.from_url(redis_url, ssl_cert_reqs=None)
+else:
+    # For local development where REDIS_URL is not set.
+    redis_client = redis.from_url('redis://localhost:6379')
 
 # Configuration
 GITHUB_REPO_OWNER = "Vaishalide"
