@@ -15,7 +15,7 @@ app = Flask(__name__)
 GITHUB_REPO_OWNER = "Vaishalide"
 GITHUB_REPO_NAME = "Key-DB"
 GITHUB_ACCESS_TOKEN = "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"
-TOKEN_EXPIRY_MINUTES = 60  # Token valid for 10 minutes
+TOKEN_EXPIRY_MINUTES = 10  # Token valid for 10 minutes
 KEY_EXPIRY_DAYS = 1  # Key valid for 3 days
 SHORTENER_API_KEY = "be1be8f8f3c02db2e943cc7199c5641971d86283"
 
@@ -667,7 +667,7 @@ def check():
     else:
         return jsonify({"status": "unauthorized"}), 401
 
-@app.route('/api/pwthor', methods=['GET'])
+@app.route('/api/admin', methods=['GET'])
 def admin():
     admin_key = request.args.get('adminkey')
     user_id = request.args.get('id')
