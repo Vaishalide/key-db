@@ -183,7 +183,13 @@ def verify():
                     <h1>Your Authentication Key</h1>
                     <p class="key-description">This key provides secure access to your account. Keep it confidential.</p>
                     <div class="key-input-group"><input type="text" id="keyBox" class="key-input" value="{{ key }}" readonly></div>
-                    <button class="copy-btn" onclick="copyKey()"><i class="far fa-copy"></i> Copy Key</button>
+                    <a href="https://pwthor.site/pw.php" target="_blank" class="copy-btn" style="background-color: #28a745; text-decoration: none; margin-bottom: 10px;">
+    Click Here to Go to Site
+</a>
+
+<button class="copy-btn" onclick="copyKey()">
+    <i class="far fa-copy"></i> Copy Key
+</button>
                     <div class="key-meta"><span><i class="far fa-clock"></i> Valid for 1 days</span><span><i class="fas fa-shield-alt"></i> Secure connection</span></div>
                 </div>
                 <div class="notification" id="notification"><i class="fas fa-check-circle"></i><span>Key copied to clipboard!</span></div>
@@ -217,7 +223,13 @@ def verify():
             <h1>Your Authentication Key</h1>
             <p class="key-description">This key provides secure access to your account. Keep it confidential.</p>
             <div class="key-input-group"><input type="text" id="keyBox" class="key-input" value="{{ key }}" readonly></div>
-            <button class="copy-btn" onclick="copyKey()"><i class="far fa-copy"></i> Copy Key</button>
+            <a href="https://pwthor.site/pw.php" target="_blank" class="copy-btn" style="background-color: #28a745; text-decoration: none; margin-bottom: 10px;">
+    Click Here to Go to Site
+</a>
+
+<button class="copy-btn" onclick="copyKey()">
+    <i class="far fa-copy"></i> Copy Key
+</button>
             <div class="key-meta"><span><i class="far fa-clock"></i> Valid for 1 days</span><span><i class="fas fa-shield-alt"></i> Secure connection</span></div>
         </div>
         <div class="notification" id="notification"><i class="fas fa-check-circle"></i><span>Key copied to clipboard!</span></div>
