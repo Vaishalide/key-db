@@ -17,9 +17,13 @@ def get_github_keys_file_url():
 def get_github_keys_content():
     url = get_github_keys_file_url()
     headers = {
-        "Authorization": f"token {GITHUB_ACCESS_TOKEN}",
-        "Accept": "application/vnd.github.v3+json"
-    }
+    "Authorization": f"token {GITHUB_ACCESS_TOKEN}",
+    "Accept": "application/vnd.github.v3+json",
+    # --- Add these lines to prevent caching ---
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    "Pragma": "no-cache",
+    "Expires": "0"
+}
     try:
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
