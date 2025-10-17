@@ -8,10 +8,10 @@ from flask import Flask, jsonify, request, render_template_string
 import pytz
 from urllib.parse import urlencode
 import redis
-from fake_useragent import UserAgent # <-- ADDED THIS IMPORT
+from fake_useragent import UserAgent
 
 app = Flask(__name__)
-ua = UserAgent() # <-- INITIALIZED THE USER AGENT GENERATOR
+ua = UserAgent()
 
 # --- MODIFIED: CONNECT TO REDIS & HANDLE HEROKU SSL ---
 redis_url = os.environ.get('REDIS_URL')
@@ -36,8 +36,6 @@ IST = pytz.timezone('Asia/Kolkata')
 def get_current_ist_time():
     return datetime.now(IST)
 
-# --- All your GitHub and helper functions remain unchanged ---
-
 def get_github_keys_file_url():
     return f"https://api.github.com/repos/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/contents/keys.json"
 
@@ -46,7 +44,6 @@ def get_github_keys_content():
     headers = {
     "Authorization": f"token {GITHUB_ACCESS_TOKEN}",
     "Accept": "application/vnd.github.v3+json",
-    # --- Add these lines to prevent caching ---
     "Cache-Control": "no-cache, no-store, must-revalidate",
     "Pragma": "no-cache",
     "Expires": "0"
@@ -91,9 +88,6 @@ def generate_key():
     return secrets.token_hex(12)
 
 def shorten_url(long_url):
-    """
-    Shortens a URL using gplinks API with a random User-Agent header.
-    """
     try:
         random_suffix = secrets.token_hex(3)[:6]
         alias = f"REDW{random_suffix}"
@@ -102,16 +96,9 @@ def shorten_url(long_url):
             f"&url={requests.utils.quote(long_url)}"
             f"&alias={alias}"
         )
-        
-        # --- MODIFICATION START ---
-        # Create headers with a random, realistic User-Agent
         headers = {'User-Agent': ua.random}
-        
-        # Make the request with the new headers
         response = requests.get(shortener_url, headers=headers)
-        # --- MODIFICATION END ---
         
-        # Check the response text for the specific error message
         if response.status_code == 200:
             response_json = response.json()
             if response_json.get("status") == "error":
@@ -135,7 +122,6 @@ def login():
 
     token = generate_token()
 
-    # --- MODIFIED: Save token to Redis with an automatic expiry ---
     token_data = json.dumps({"user_id": user_id})
     redis_client.setex(token, timedelta(minutes=TOKEN_EXPIRY_MINUTES), token_data)
 
@@ -143,10 +129,15 @@ def login():
 
     short_url_data = shorten_url(verify_url)
     
-    # Check if the shortening was successful
-    if not short_url_data or short_url_data.get('status') == 'error':
-        return jsonify({"status": "error", "message": "Failed to shorten URL", "details": short_url_data.get('message', 'Unknown API error')}), 500
+    # --- MODIFIED SECTION START ---
+    # First, check if the function failed completely and returned None.
+    if short_url_data is None:
+        return jsonify({"status": "error", "message": "Failed to contact the URL shortening service."}), 500
 
+    # If we have data, now check if the API itself reported an error.
+    if short_url_data.get('status') == 'error':
+        return jsonify({"status": "error", "message": "Failed to shorten URL", "details": short_url_data.get('message', 'Unknown API error')}), 500
+    # --- MODIFIED SECTION END ---
 
     response_data = {
         "status": "success",
@@ -172,11 +163,9 @@ def verify():
     if not token or not user_id:
         return "Invalid request", 400
 
-    # --- MODIFIED: Check for token in Redis ---
     token_data_from_redis = redis_client.get(token)
 
     if not token_data_from_redis:
-        # If the token is not in Redis, it's either invalid or has expired
         return "Invalid or expired token", 400
 
     stored_data = json.loads(token_data_from_redis.decode('utf-8'))
@@ -185,7 +174,6 @@ def verify():
     if stored_user_id != user_id:
         return "Invalid or expired token", 400
 
-    # --- The rest of your logic is unchanged ---
     current_time = get_current_ist_time()
     keys_data = get_github_keys_content()
 
