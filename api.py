@@ -7,9 +7,11 @@ from datetime import datetime, timedelta
 from flask import Flask, jsonify, request, render_template_string
 import pytz
 from urllib.parse import urlencode
-import redis  # <-- IMPORT REDIS
+import redis
+from fake_useragent import UserAgent # <-- ADDED THIS IMPORT
 
 app = Flask(__name__)
+ua = UserAgent() # <-- INITIALIZED THE USER AGENT GENERATOR
 
 # --- MODIFIED: CONNECT TO REDIS & HANDLE HEROKU SSL ---
 redis_url = os.environ.get('REDIS_URL')
@@ -25,7 +27,7 @@ else:
 GITHUB_REPO_OWNER = "Vaishalide"
 GITHUB_REPO_NAME = "Key-DB"
 GITHUB_ACCESS_TOKEN = "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"
-TOKEN_EXPIRY_MINUTES = 30  # <-- UPDATED to 30 minutes as requested
+TOKEN_EXPIRY_MINUTES = 30
 KEY_EXPIRY_DAYS = 1
 SHORTENER_API_KEY = "be1be8f8f3c02db2e943cc7199c5641971d86283"
 
@@ -89,6 +91,9 @@ def generate_key():
     return secrets.token_hex(12)
 
 def shorten_url(long_url):
+    """
+    Shortens a URL using gplinks API with a random User-Agent header.
+    """
     try:
         random_suffix = secrets.token_hex(3)[:6]
         alias = f"REDW{random_suffix}"
@@ -97,15 +102,30 @@ def shorten_url(long_url):
             f"&url={requests.utils.quote(long_url)}"
             f"&alias={alias}"
         )
-        response = requests.get(shortener_url)
+        
+        # --- MODIFICATION START ---
+        # Create headers with a random, realistic User-Agent
+        headers = {'User-Agent': ua.random}
+        
+        # Make the request with the new headers
+        response = requests.get(shortener_url, headers=headers)
+        # --- MODIFICATION END ---
+        
+        # Check the response text for the specific error message
         if response.status_code == 200:
-            return response.json()
+            response_json = response.json()
+            if response_json.get("status") == "error":
+                print(f"GPLinks API Error: {response_json.get('message')}")
+                return None
+            return response_json
+            
+        print(f"Failed to shorten URL. Status Code: {response.status_code}, Response: {response.text}")
         return None
+        
     except Exception as e:
         print(f"Error shortening URL: {e}")
         return None
 
-# --- DELETED the old in-memory dictionary: `temporary_tokens = {}` ---
 
 @app.route('/api/login', methods=['GET'])
 def login():
@@ -122,8 +142,11 @@ def login():
     verify_url = f"{request.url_root}api/verify?token={token}&id={user_id}"
 
     short_url_data = shorten_url(verify_url)
-    if not short_url_data:
-        return jsonify({"status": "error", "message": "Failed to shorten URL"}), 500
+    
+    # Check if the shortening was successful
+    if not short_url_data or short_url_data.get('status') == 'error':
+        return jsonify({"status": "error", "message": "Failed to shorten URL", "details": short_url_data.get('message', 'Unknown API error')}), 500
+
 
     response_data = {
         "status": "success",
