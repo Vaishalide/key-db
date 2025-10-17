@@ -27,7 +27,7 @@ GITHUB_REPO_NAME = "Key-DB"
 GITHUB_ACCESS_TOKEN = "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"
 TOKEN_EXPIRY_MINUTES = 30  # <-- UPDATED to 30 minutes as requested
 KEY_EXPIRY_DAYS = 1
-SHORTENER_API_KEY = "16d3bad9742d0f6ee290d8ccc9a8e7445385c021"
+SHORTENER_API_KEY = "14cfebd76f5bb80680ebff03144bc7af69acac51"
 
 IST = pytz.timezone('Asia/Kolkata')
 
@@ -93,7 +93,7 @@ def shorten_url(long_url):
         random_suffix = secrets.token_hex(3)[:6]
         alias = f"REDWXXX{random_suffix}"
         shortener_url = (
-            f"https://liteshort.com/api?api={SHORTENER_API_KEY}"
+            f"https://nowshort.com/api?api={SHORTENER_API_KEY}"
             f"&url={requests.utils.quote(long_url)}"
             f"&alias={alias}"
         )
