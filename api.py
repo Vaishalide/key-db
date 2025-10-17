@@ -95,7 +95,7 @@ def shorten_url(long_url):
         shortener_url = (
             f"https://api.gplinks.com/api?api={SHORTENER_API_KEY}"
             f"&url={requests.utils.quote(long_url)}"
-           # f"&alias={alias}"
+            f"&alias={alias}"
         )
         response = requests.get(shortener_url)
         if response.status_code == 200:
