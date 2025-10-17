@@ -8,10 +8,10 @@ from flask import Flask, jsonify, request, render_template_string
 import pytz
 from urllib.parse import urlencode
 import redis
-from fake_useragent import UserAgent
+import cloudscraper # <-- IMPORT CLOUDSCRAPER
 
 app = Flask(__name__)
-ua = UserAgent()
+scraper = cloudscraper.create_scraper() # <-- CREATE A SCRAPER INSTANCE
 
 # --- MODIFIED: CONNECT TO REDIS & HANDLE HEROKU SSL ---
 redis_url = os.environ.get('REDIS_URL')
@@ -96,8 +96,11 @@ def shorten_url(long_url):
             f"&url={requests.utils.quote(long_url)}"
             f"&alias={alias}"
         )
-        headers = {'User-Agent': ua.random}
-        response = requests.get(shortener_url, headers=headers)
+        
+        # --- MODIFICATION START ---
+        # Use cloudscraper to bypass bot detection
+        response = scraper.get(shortener_url)
+        # --- MODIFICATION END ---
         
         if response.status_code == 200:
             response_json = response.json()
@@ -129,7 +132,6 @@ def login():
 
     short_url_data = shorten_url(verify_url)
     
-    # --- MODIFIED SECTION START ---
     # First, check if the function failed completely and returned None.
     if short_url_data is None:
         return jsonify({"status": "error", "message": "Failed to contact the URL shortening service."}), 500
@@ -137,7 +139,6 @@ def login():
     # If we have data, now check if the API itself reported an error.
     if short_url_data.get('status') == 'error':
         return jsonify({"status": "error", "message": "Failed to shorten URL", "details": short_url_data.get('message', 'Unknown API error')}), 500
-    # --- MODIFIED SECTION END ---
 
     response_data = {
         "status": "success",
@@ -145,6 +146,8 @@ def login():
         "video_url": "https://youtube.com/shorts/a9jf4pOVTXw?si=5Pq1G20M_iAv0Rnc"
     }
     return jsonify(response_data)
+
+# ... (The rest of your code from /api/verify downwards remains exactly the same) ...
 
 @app.route('/api/verify', methods=['GET'])
 def verify():
