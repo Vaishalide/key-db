@@ -90,7 +90,7 @@ def generate_key():
 
 def shorten_url(long_url):
     try:
-        random_suffix = secrets.token_hex(4)[:6]
+        random_suffix = secrets.token_hex(3)[:7]
         alias = f"REDWXXX{random_suffix}"
         shortener_url = (
             f"https://api.gplinks.com/api?api={SHORTENER_API_KEY}"
