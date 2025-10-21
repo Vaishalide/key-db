@@ -7,11 +7,9 @@ from datetime import datetime, timedelta
 from flask import Flask, jsonify, request, render_template_string
 import pytz
 from urllib.parse import urlencode
-import redis
-from fake_useragent import UserAgent
+import redis  # <-- IMPORT REDIS
 
 app = Flask(__name__)
-ua = UserAgent()
 
 # --- MODIFIED: CONNECT TO REDIS & HANDLE HEROKU SSL ---
 redis_url = os.environ.get('REDIS_URL')
@@ -27,7 +25,7 @@ else:
 GITHUB_REPO_OWNER = "Vaishalide"
 GITHUB_REPO_NAME = "Key-DB"
 GITHUB_ACCESS_TOKEN = "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"
-TOKEN_EXPIRY_MINUTES = 30
+TOKEN_EXPIRY_MINUTES = 30  # <-- UPDATED to 30 minutes as requested
 KEY_EXPIRY_DAYS = 1
 SHORTENER_API_KEY = "14cfebd76f5bb80680ebff03144bc7af69acac51"
 
@@ -35,6 +33,8 @@ IST = pytz.timezone('Asia/Kolkata')
 
 def get_current_ist_time():
     return datetime.now(IST)
+
+# --- All your GitHub and helper functions remain unchanged ---
 
 def get_github_keys_file_url():
     return f"https://api.github.com/repos/{GITHUB_REPO_OWNER}/{GITHUB_REPO_NAME}/contents/keys.json"
@@ -44,6 +44,7 @@ def get_github_keys_content():
     headers = {
     "Authorization": f"token {GITHUB_ACCESS_TOKEN}",
     "Accept": "application/vnd.github.v3+json",
+    # --- Add these lines to prevent caching ---
     "Cache-Control": "no-cache, no-store, must-revalidate",
     "Pragma": "no-cache",
     "Expires": "0"
@@ -96,23 +97,15 @@ def shorten_url(long_url):
             f"&url={requests.utils.quote(long_url)}"
             f"&alias={alias}"
         )
-        headers = {'User-Agent': ua.random}
-        response = requests.get(shortener_url, headers=headers)
-        
+        response = requests.get(shortener_url)
         if response.status_code == 200:
-            response_json = response.json()
-            if response_json.get("status") == "error":
-                print(f"GPLinks API Error: {response_json.get('message')}")
-                return None
-            return response_json
-            
-        print(f"Failed to shorten URL. Status Code: {response.status_code}, Response: {response.text}")
+            return response.json()
         return None
-        
     except Exception as e:
         print(f"Error shortening URL: {e}")
         return None
 
+# --- DELETED the old in-memory dictionary: `temporary_tokens = {}` ---
 
 @app.route('/api/login', methods=['GET'])
 def login():
@@ -122,22 +115,15 @@ def login():
 
     token = generate_token()
 
+    # --- MODIFIED: Save token to Redis with an automatic expiry ---
     token_data = json.dumps({"user_id": user_id})
     redis_client.setex(token, timedelta(minutes=TOKEN_EXPIRY_MINUTES), token_data)
 
     verify_url = f"{request.url_root}api/verify?token={token}&id={user_id}"
 
     short_url_data = shorten_url(verify_url)
-    
-    # --- MODIFIED SECTION START ---
-    # First, check if the function failed completely and returned None.
-    if short_url_data is None:
-        return jsonify({"status": "error", "message": "Failed to contact the URL shortening service."}), 500
-
-    # If we have data, now check if the API itself reported an error.
-    if short_url_data.get('status') == 'error':
-        return jsonify({"status": "error", "message": "Failed to shorten URL", "details": short_url_data.get('message', 'Unknown API error')}), 500
-    # --- MODIFIED SECTION END ---
+    if not short_url_data:
+        return jsonify({"status": "error", "message": "Failed to shorten URL"}), 500
 
     response_data = {
         "status": "success",
@@ -163,9 +149,11 @@ def verify():
     if not token or not user_id:
         return "Invalid request", 400
 
+    # --- MODIFIED: Check for token in Redis ---
     token_data_from_redis = redis_client.get(token)
 
     if not token_data_from_redis:
+        # If the token is not in Redis, it's either invalid or has expired
         return "Invalid or expired token", 400
 
     stored_data = json.loads(token_data_from_redis.decode('utf-8'))
@@ -174,6 +162,7 @@ def verify():
     if stored_user_id != user_id:
         return "Invalid or expired token", 400
 
+    # --- The rest of your logic is unchanged ---
     current_time = get_current_ist_time()
     keys_data = get_github_keys_content()
 
