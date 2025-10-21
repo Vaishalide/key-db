@@ -8,30 +8,19 @@ from flask import Flask, jsonify, request, render_template_string
 import pytz
 from urllib.parse import urlencode
 import redis
-import cloudscraper
+from fake_useragent import UserAgent
 
 app = Flask(__name__)
-scraper = cloudscraper.create_scraper()
+ua = UserAgent()
 
-# --- MODIFICATION START: READ THE FIXIE PROXY FROM HEROKU ENV VARS ---
-FIXIE_URL = os.environ.get('FIXIE_URL')
-proxies = {}
-if FIXIE_URL:
-    # The Fixie URL is the proxy address
-    proxies = {
-        'http': FIXIE_URL,
-        'https': FIXIE_URL,
-    }
-    print("Using Fixie proxy for outbound requests.")
-# --- MODIFICATION END ---
-
-
-# --- CONNECT TO REDIS & HANDLE HEROKU SSL ---
+# --- MODIFIED: CONNECT TO REDIS & HANDLE HEROKU SSL ---
 redis_url = os.environ.get('REDIS_URL')
 
 if redis_url:
+    # On Heroku, REDIS_URL is present. Connect with SSL verification disabled.
     redis_client = redis.from_url(redis_url, ssl_cert_reqs=None)
 else:
+    # For local development where REDIS_URL is not set.
     redis_client = redis.from_url('redis://localhost:6379')
 
 # Configuration
@@ -53,12 +42,12 @@ def get_github_keys_file_url():
 def get_github_keys_content():
     url = get_github_keys_file_url()
     headers = {
-        "Authorization": f"token {GITHUB_ACCESS_TOKEN}",
-        "Accept": "application/vnd.github.v3+json",
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        "Pragma": "no-cache",
-        "Expires": "0"
-    }
+    "Authorization": f"token {GITHUB_ACCESS_TOKEN}",
+    "Accept": "application/vnd.github.v3+json",
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    "Pragma": "no-cache",
+    "Expires": "0"
+}
     try:
         response = requests.get(url, headers=headers)
         if response.status_code == 200:
@@ -101,32 +90,27 @@ def generate_key():
 def shorten_url(long_url):
     try:
         random_suffix = secrets.token_hex(3)[:6]
-        alias = f"movie{random_suffix}"
+        alias = f"REDW{random_suffix}"
         shortener_url = (
             f"https://nowshort.com/api?api={SHORTENER_API_KEY}"
             f"&url={requests.utils.quote(long_url)}"
             f"&alias={alias}"
         )
-        
-        # This line now automatically uses the Fixie proxy if it's available
-        response = scraper.get(shortener_url, proxies=proxies)
+        headers = {'User-Agent': ua.random}
+        response = requests.get(shortener_url, headers=headers)
         
         if response.status_code == 200:
-            try:
-                response_json = response.json()
-                if response_json.get("status") == "error":
-                    print(f"GPLinks API Error: {response_json.get('message')}")
-                    return None
-                return response_json
-            except (json.JSONDecodeError, ValueError):
-                print("Failed to decode JSON. The API may be blocking the proxy.")
+            response_json = response.json()
+            if response_json.get("status") == "error":
+                print(f"GPLinks API Error: {response_json.get('message')}")
                 return None
+            return response_json
             
         print(f"Failed to shorten URL. Status Code: {response.status_code}, Response: {response.text}")
         return None
         
     except Exception as e:
-        print(f"Error during shortening request: {e}")
+        print(f"Error shortening URL: {e}")
         return None
 
 
@@ -145,11 +129,15 @@ def login():
 
     short_url_data = shorten_url(verify_url)
     
+    # --- MODIFIED SECTION START ---
+    # First, check if the function failed completely and returned None.
     if short_url_data is None:
         return jsonify({"status": "error", "message": "Failed to contact the URL shortening service."}), 500
 
+    # If we have data, now check if the API itself reported an error.
     if short_url_data.get('status') == 'error':
         return jsonify({"status": "error", "message": "Failed to shorten URL", "details": short_url_data.get('message', 'Unknown API error')}), 500
+    # --- MODIFIED SECTION END ---
 
     response_data = {
         "status": "success",
@@ -157,7 +145,6 @@ def login():
         "video_url": "https://youtube.com/shorts/a9jf4pOVTXw?si=5Pq1G20M_iAv0Rnc"
     }
     return jsonify(response_data)
-
 
 @app.route('/api/verify', methods=['GET'])
 def verify():
