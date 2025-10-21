@@ -91,7 +91,7 @@ def generate_key():
 def shorten_url(long_url):
     try:
         random_suffix = secrets.token_hex(3)[:6]
-        alias = f"REDW{random_suffix}"
+        alias = f"movie4uyt{random_suffix}"
         shortener_url = (
             f"https://nowshort.com/api?api={SHORTENER_API_KEY}"
             f"&url={requests.utils.quote(long_url)}"
