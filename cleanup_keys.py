@@ -7,7 +7,7 @@ import pytz
 # --- CONFIGURATION (Copy these from your api.py) ---
 GITHUB_REPO_OWNER = "Vaishalide"
 GITHUB_REPO_NAME = "Key-DB"
-GITHUB_ACCESS_TOKEN = "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"
+GITHUB_ACCESS_TOKEN = "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"
 IST = pytz.timezone('Asia/Kolkata')
 
 # --- HELPER FUNCTIONS (Copy these from your api.py) ---
