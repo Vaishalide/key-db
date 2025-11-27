@@ -27,7 +27,7 @@ GITHUB_REPO_NAME = "Key-DB"
 GITHUB_ACCESS_TOKEN = "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"
 TOKEN_EXPIRY_MINUTES = 30  # <-- UPDATED to 30 minutes as requested
 KEY_EXPIRY_DAYS = 1
-SHORTENER_API_KEY = "be1be8f8f3c02db2e943cc7199c5641971d86283"
+SHORTENER_API_KEY = "d9918049795aad4d2d193e317ac522f1d276c701"
 
 IST = pytz.timezone('Asia/Kolkata')
 
@@ -91,9 +91,9 @@ def generate_key():
 def shorten_url(long_url):
     try:
         random_suffix = secrets.token_hex(3)[:6]
-        alias = f"movie4uyt{random_suffix}"
+        alias = f"pwthor{random_suffix}"
         shortener_url = (
-            f"https://api.gplinks.com/api?api={SHORTENER_API_KEY}"
+            f"https://arolinks.com/api?api={SHORTENER_API_KEY}"
             f"&url={requests.utils.quote(long_url)}"
             f"&alias={alias}"
         )
